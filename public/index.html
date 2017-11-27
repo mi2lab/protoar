@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Hello, World!</title>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
+    </head>
+    <body>
+        <h1>Hello, World!</h1>
+        <script>
+            const socket = io();
+            
+            socket.on("connect", function() {
+                socket.emit("hello-world", "Hello, Sockets!");
+            });
+        </script>
+    </body>
+</html>
