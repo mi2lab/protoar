@@ -1,0 +1,404 @@
+html,
+body {
+    height: 100%;
+    background: #2b2b2b;
+    color: #cccccc;
+    overflow: hidden;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    font-size: 12px;
+    user-select: none;
+    margin: 0;
+    padding: 0;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 5px;
+    background-color: #999;
+}
+
+.toolbar {
+    box-sizing: border-box;
+    position: absolute;
+    height: 68px;
+    width: 100%;
+    padding: 4px 4px 4px 11px;
+}
+
+#brand {
+    font-size: 200%;
+    font-weight: normal;
+    color: white;
+}
+
+.toolbtn-grp {
+    display: inline-block;
+    float: left;
+    margin-right: 16px;
+}
+
+.toolbtn-grp.3d-tools {
+    margin-right: 24px;
+    margin-left: 8px;
+}
+
+.layers label {
+    display: block;
+}
+
+.layers input {
+    position: relative;
+    top: 2px;
+}
+
+.toolbtn {
+    float: left;
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    margin: 5px;
+    font-size: 100%;
+    display: inline-block;
+    padding: 1px;
+    float: left;
+    margin-right: 10px;
+    margin-top: 16px;
+    border-radius: 2px;
+    background: #444;
+    line-height: 41px;
+    color: white;
+    cursor: pointer;
+}
+
+.toolbtn.toggle {
+    background: #666;
+}
+
+.toolbtn.selected {
+    background: #999;
+}
+
+.toolbtn i {
+    font-size: 18px;
+}
+
+#inspect {
+    font-weight: bold;
+    padding-left: 16px;
+    padding-right: 16px;
+    width: auto;
+    font-size: 16px;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+#color {
+    float: left;
+    width: 57px;
+    height: 61px;
+    padding: 0;
+    -webkit-appearance: media-slider;
+}
+
+.color-group {
+    width: 215px;
+}
+
+.colors {
+    float: left;
+    overflow: hidden;
+    background-color: #777777;
+    padding: 1px;
+    margin-top: 4px;
+}
+
+.color-picker {
+    float: left;
+    width: 25px;
+    height: 25px;
+    margin-right: 1px;
+}
+
+.black {
+    background: black;
+}
+
+.white {
+    background: white;
+}
+
+.blue {
+    background: blue;
+}
+
+.green {
+    background: green;
+}
+
+.red {
+    background: red;
+}
+
+.yellow {
+    background: yellow;
+    margin-right: 0;
+}
+
+main {
+    position: absolute;
+    width: 100%;
+    height: calc(100% - 78px);
+    top: 78px;
+}
+
+.pane {
+    background: #3e3e3e;
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: absolute;
+    box-sizing: border-box;
+    padding: 5px;
+    z-index: 0;
+}
+
+.pane h2 {
+    height: 32px;
+    margin: 0;
+    margin-right: 4px;
+    padding: 0;
+    display: inline-block;
+}
+
+.pane .actions {
+    padding: 5px;
+    display: inline-block;
+    z-index: 10001;
+}
+
+.pane .actions .selected {
+    background: #999;
+}
+
+.pane .actions .toolbtn {
+    width: 29px;
+    height: 29px;
+    line-height: 0;
+    margin-top: 3px;
+}
+
+#view {
+    left: 4px;
+    top: 4px;
+    width: calc(.666 * calc(100% - 12px));
+    height: calc(.666 * calc(100% - 12px));
+    overflow: hidden;
+    padding: 0;
+}
+
+.pane h2 {
+    margin: 12px 5px 5px 10px;
+    float: left;
+}
+
+#device-select {
+    z-index: 10001;
+}
+
+#stencil {
+    max-width: 100%;
+    position: absolute;
+    top: calc(50% + 15px);
+    left: 50%;
+    max-height: 100%;
+    transform: translateX(-50%) translateY(-50%);
+    z-index: -1;
+}
+
+#arview {
+    overflow: hidden;
+    border: 1px solid #0f0f0f;
+    width: 100%;
+    height: 100%;
+    max-width: 60%;
+    max-height: 77%;
+    position: absolute;
+    top: calc(50% + 15px);
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+}
+
+#arview.fullscreen {
+    width: 100vw !important;
+    height: calc(100vh - 78px) !important;
+    top: 78px;
+    position: fixed;
+    left: 0;
+    transform: none;
+    max-height: 100vh;
+    max-width: 100vw;
+}
+
+#arcamera {
+    object-fit: fill;
+}
+
+#arcamera,
+#aframe,
+#fcanvas,
+.upper-canvas {
+    border: 0;
+    position: absolute;
+    width: 100% !important;
+    height: 100% !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translateX(-50%) translateY(-50%);
+}
+
+.canvas-container {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+#capture {
+    top: 4px;
+    right: 4px;
+    width: calc(.333 * calc(100% - 12px));
+    height: calc(.666 * calc(100% - 12px));
+}
+
+#record {
+    width: 40px;
+}
+
+#filter-color {
+    width: 33px;
+    height: 30px;
+    -webkit-appearance: media-slider;
+}
+
+#capture #ccanvas {
+    border: 1px solid #333;
+    width: 100%;
+}
+
+#collect {
+    left: 4px;
+    bottom: 4px;
+    width: calc(100% - 12px);
+    height: calc(.333 * calc(100% - 12px));
+}
+
+
+/* TODO I would like resources to scroll horizontally
+#resources {
+    height: calc(.333 - 32px);
+}*/
+
+#resources img,
+#resources video {
+    border: 1px solid #333;
+    height: 100px;
+    margin: 4px;
+}
+
+#resources .selected {
+    outline: 3px solid #fff;
+}
+
+.spacer {
+    height: 8px;
+}
+
+button,
+input,
+select {
+    background: #666666;
+    padding: 5px;
+    color: white;
+    border: none;
+}
+
+button {
+    border-radius: 2px;
+    font-weight: bold;
+    text-transform: uppercase;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+label {
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#import label {
+    width: 100%;
+    height: 100%;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+input[type="checkbox"] {
+    -webkit-appearance: none;
+    cursor: pointer;
+    border: 0;
+    background: #444;
+    border-radius: 2px;
+    border: 2px solid #444;
+}
+
+input[type="checkbox"]:checked {
+    background: #999;
+    border: 2px solid #fff;
+}
+
+
+/* a bunch of generated css for sliders */
+
+input[type=range].slider {
+    -webkit-appearance: none;
+    width: 100px;
+    margin: 3.8px 0;
+    background: transparent;
+}
+
+input[type=range].slider:focus {
+    outline: none;
+}
+
+input[type=range].slider::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 8.4px;
+    cursor: pointer;
+    border: 0.2px solid #666;
+    background: #444;
+}
+
+input[type=range].slider::-webkit-slider-thumb {
+    border: 2px solid #fff;
+    border-radius: 2px;
+    background: #999;
+    height: 14px;
+    width: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+    margin-top: -4px;
+}
+
+input[type=range]#opacity {
+    width: 147px;
+}
+
+input[type=range]#opacity::-webkit-slider-runnable-track {
+    background: linear-gradient(to right, #000, #fff);
+    width: 100%;
+}

@@ -1,0 +1,381 @@
+<script src="https://aframe.io/releases/0.6.0/aframe.min.js"></script>
+<script src="https://rawgithub.com/ngokevin/kframe/master/components/reverse-look-controls/dist/aframe-reverse-look-controls-component.min.js"></script>
+<script src="../../vendor/aframe-click-drag-component.min.js"></script>
+<script src="../../vendor/aframe-mouse-cursor-component.min.js"></script>
+<script src="../../vendor/aframe-look-at-component.min.js"></script>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+<script>
+	AFRAME.registerComponent('logger', {
+		update: function() {
+			var e = this;
+			console.log(e);
+		}
+	});
+</script>
+
+<style>
+	#control-panel {
+		position: absolute;
+		right: 30;
+		top: 30;
+		z-index: 10;
+		text-align: left;
+	}
+
+	#previewPanel {
+		position: absolute;
+		left: 0;
+		top: 0;
+	}
+
+	#previewPanel {
+		position: absolute;
+		left: 0;
+		top: 0;
+		z-index: 10;
+	}
+</style>
+
+<body style="margin : 0px; overflow: hidden; background: #005500" onload="Onload()">
+	<div id="control-panel">
+		<label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-1">
+			<input type="radio" id="option-1" class="mdl-radio__button" name="options" value="0" checked>
+			<span class="mdl-radio__label">Clockwise</span>
+		</label>
+		<br>
+		<label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-2">
+			<input type="radio" id="option-2" class="mdl-radio__button" name="options" value="1">
+			<span class="mdl-radio__label">Counterclockwise</span>
+		</label>
+		<br>
+		<br>Top-Left Corner
+		<br>left - right
+		<input id="sliderLR" class="mdl-slider mdl-js-slider" type="range" min="0" max="100" value="0" tabindex="0" onchange="adjustLeftBorder(this.value)">
+		<br>top - bottom
+		<input id="sliderTB" class="mdl-slider mdl-js-slider" type="range" min="0" max="100" value="0" tabindex="0" onchange="adjustTopBorder(this.value)">
+		<br>width/height
+		<input id="sliderSize" class="mdl-slider mdl-js-slider" type="range" min="0" max="100" value="0" tabindex="0" onchange="adjustWindowSize(this.value)">
+		<br>Background Color
+		<div id="background" style="background: white; width: 10; height: 10"></div>
+		<br> Background Threshold
+		<br>
+		<input id="sliderThreshold" class="mdl-slider mdl-js-slider" type="range" min="0" max="100" value="10" tabindex="0" onchange="adjustBackgroundTolerence(this.value)">
+
+		<!--
+		<button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" onclick="applyVideo()">
+			Apply
+		</button>
+-->
+	</div>
+	<div id="previewPanel">
+		<canvas id="previewCanvas"></canvas>
+	</div>
+	<a-scene>
+		<a-entity id="wrapper" position="0 0 -5" look-at="#camera">
+			<a-plane id="front" height="1" width="1" position="0 0 0" rotation="0 0 0">
+			</a-plane>
+		</a-entity>
+		<a-sphere id="leftSemiSphere" radius="0.5" position="-2 1.6 -5" phi-length="180" phi-start="0"></a-sphere>
+		<a-sphere id="rightSemiSphere" radius="0.5" position="-2 1.6 -5" phi-length="180" phi-start="180"></a-sphere>
+		<a-sphere id="leftSemiSphere_Cell" radius="0.5" position="0 1.6 -5" phi-length="180" phi-start="0"></a-sphere>
+		<a-sphere id="rightSemiSphere_Cell" radius="0.5" position="0 1.6 -5" phi-length="180" phi-start="180" src="imgs/cell.jpg"></a-sphere>
+		<a-sphere id="leftSemiSphere_Soccer" radius="0.5" position="2 1.6 -5" phi-length="180" phi-start="0"></a-sphere>
+		<a-sphere id="rightSemiSphere_Soccer" radius="0.5" position="2 1.6 -5" phi-length="180" phi-start="180"></a-sphere>
+		<a-camera id="camera" position="0 -1.6 0" rotation="0 0 0" look-controls wasd-controls></a-camera>
+	</a-scene>
+	<script>
+		var face = 0;
+		var lastTimeFrame = -1;
+
+		//		var video = document.getElementById("preview");
+		var video = document.createElement("video");
+		var previewCanvas = document.getElementById("previewCanvas");
+		var previewContext;
+		video.preload = "auto";
+		video.src = "vid/roesti4.mp4";
+		//video.src = "vid/baymax1.mp4";
+		video.addEventListener('loadeddata', function() {
+			//			previewCanvas.width = video.videoWidth;
+			//			previewCanvas.height = video.videoHeight;
+			previewCanvas.width = video.videoWidth / 5;
+			previewCanvas.height = video.videoHeight / 5;
+			previewContext = previewCanvas.getContext('2d');
+			console.log("Loaded the video's data!");
+		}, false);
+
+		var camera = document.getElementById("camera");
+
+		var backgroundColor = document.getElementById("background");
+		var backgroundTolerance;
+		var backgroundR,
+			backgroundG,
+			backgroundB;
+
+		var leftBorder = 80;
+		var topBorder = 150;
+		var windowSize = 200;
+
+		function adjustLeftBorder(value) {
+			leftBorder = parseInt(value) / 100 * video.videoWidth;
+			console.log("left border set to " + leftBorder);
+			triggerCamera();
+		}
+
+		function adjustTopBorder(value) {
+			topBorder = parseInt(value) / 100 * video.videoHeight;
+			console.log("top border set to " + topBorder);
+			triggerCamera();
+		}
+
+		function adjustWindowSize(value) {
+			windowSize = value / 100 * (Math.min(video.videoWidth - leftBorder, video.videoHeight - topBorder));
+			console.log("window size set to " + windowSize);
+			triggerCamera();
+		}
+
+		function adjustBackgroundTolerence(value) {
+			backgroundTolerance = parseInt(value);
+			triggerCamera();
+		}
+
+		var selectingBackgroundFlag = false;
+
+		backgroundColor.onclick = function(e) {
+			selectingBackgroundFlag = true;
+		}
+
+		function componentToHex(c) {
+			var hex = c.toString(16);
+			return hex.length == 1 ? "0" + hex : hex;
+		}
+
+		function rgbToHex(r, g, b) {
+			return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+		}
+		previewCanvas.onclick = function(e) {
+			if (selectingBackgroundFlag) {
+				selectingBackgroundFlag = false;
+				var x = e.clientX,
+					y = e.clientY;
+				console.log(e.clientX + " " + e.clientY);
+				var data = previewContext.getImageData(x, y, 1, 1).data;
+				backgroundR = data[0];
+				backgroundG = data[1];
+				backgroundB = data[2];
+				backgroundColor.style.background = rgbToHex(data[0], data[1], data[2]);
+				console.log(data);
+				triggerCamera();
+			}
+		}
+
+		function triggerCamera() {
+			position = camera.getAttribute("position");
+			position.y += 0.1;
+			camera.setAttribute('position', position);
+			position.y -= 0.1;
+			camera.setAttribute('position', position);
+		}
+
+		var CCW = false;
+		var rad = document.getElementsByName('options');
+		for (var i = 0; i < rad.length; ++i) {
+			rad[i].onclick = function() {
+				if (this.value == "0") {
+					if (CCW) {
+						CCW = false;
+						triggerCamera();
+					}
+				} else if (this.value == "1") {
+					if (!CCW) {
+						CCW = true;
+						triggerCamera();
+					}
+				}
+			}
+		}
+
+		function Onload() {
+			var sliderLR = document.getElementById("sliderLR");
+			var sliderTB = document.getElementById("sliderTB");
+			var sliderSize = document.getElementById("sliderSize");
+			var sliderThreshold = document.getElementById("sliderThreshold");
+			sliderThreshold.onchange();
+
+			sliderLR.value = leftBorder / video.videoWidth * 100;
+			sliderTB.value = topBorder / video.videoHeight * 100;
+			sliderSize.value = windowSize / (Math.min(video.videoWidth - leftBorder, video.videoHeight - topBorder)) * 100;
+			var wrapper = document.getElementById("wrapper");
+			var front = document.getElementById("front");
+			var leftSemiSphere = document.getElementById("leftSemiSphere");
+			var rightSemiSphere = document.getElementById("rightSemiSphere");
+			var leftImg = new Image();
+			leftImg.src = 'imgs/left.jpg';
+			leftImg.onload = function() {
+				var canvas = document.createElement("canvas");
+				canvas.width = this.width;
+				canvas.height = this.height;
+
+				var ctx = canvas.getContext("2d");
+				ctx.drawImage(this, 0, 0);
+				var imgData = imgProcess(canvas, ctx);
+
+				ctx.putImageData(imgData, 0, 0);
+				var dataURL = canvas.toDataURL();
+				leftSemiSphere.setAttribute('src', dataURL);
+			};
+
+			var rightImg = new Image();
+			rightImg.src = 'imgs/right.jpg';
+			rightImg.onload = function() {
+				var canvas = document.createElement("canvas");
+				canvas.width = this.width;
+				canvas.height = this.height;
+
+				var ctx = canvas.getContext("2d");
+				ctx.drawImage(this, 0, 0);
+
+				var imgData = imgProcess(canvas, ctx);
+				ctx.putImageData(imgData, 0, 0);
+
+				var dataURL = canvas.toDataURL();
+				rightSemiSphere.setAttribute('src', dataURL);
+			};
+
+			var leftSemiSphere_Soccer = document.getElementById("leftSemiSphere_Soccer");
+			var rightSemiSphere_Soccer = document.getElementById("rightSemiSphere_Soccer");
+			var leftImg_Soccer = new Image();
+			leftImg_Soccer.src = 'imgs/soccer.jpg';
+			leftImg_Soccer.onload = function() {
+				var canvas = document.createElement("canvas");
+				canvas.width = this.width;
+				canvas.height = this.height;
+
+				var ctx = canvas.getContext("2d");
+				ctx.drawImage(this, 0, 0);
+				var imgData = imgProcess(canvas, ctx);
+
+				ctx.putImageData(imgData, 0, 0);
+				var dataURL = canvas.toDataURL();
+				leftSemiSphere_Soccer.setAttribute('src', dataURL);
+			};
+
+			var rightImg_Soccer = new Image();
+			rightImg_Soccer.src = 'imgs/soccer.jpg';
+			rightImg_Soccer.onload = function() {
+				var canvas = document.createElement("canvas");
+				canvas.width = this.width;
+				canvas.height = this.height;
+
+				var ctx = canvas.getContext("2d");
+				ctx.drawImage(this, 0, 0);
+
+				var imgData = imgProcess(canvas, ctx);
+
+				ctx.putImageData(imgData, 0, 0);
+				var dataURL = canvas.toDataURL();
+				rightSemiSphere_Soccer.setAttribute('src', dataURL);
+			};
+
+			var leftSemiSphere_Cell = document.getElementById("leftSemiSphere_Cell");
+			var leftImg_Cell = new Image();
+			leftImg_Cell.src = 'imgs/cell.jpg';
+			leftImg_Cell.onload = function() {
+				var canvas = document.createElement("canvas");
+				canvas.width = this.width;
+				canvas.height = this.height;
+
+				var ctx = canvas.getContext("2d");
+				ctx.drawImage(this, 0, 0);
+				var imgData = imgProcess(canvas, ctx);
+
+				ctx.putImageData(imgData, 0, 0);
+				var dataURL = canvas.toDataURL();
+				//document.write('<img src="' + canvas.toDataURL("image/png") + '"/>');
+				leftSemiSphere_Cell.setAttribute('src', dataURL);
+			};
+
+			video.addEventListener('seeked', function() {
+				var bufferCanvas = document.createElement("canvas");
+				bufferCanvas.width = 150;
+				bufferCanvas.height = 150;
+				var bufferContext = bufferCanvas.getContext('2d');
+				//				bufferContext.drawImage(video, video.videoWidth / 2 - 60, video.videoHeight / 2 - 60, 120, 120, 0, 0, 200, 200);
+				bufferContext.drawImage(video, leftBorder, topBorder, windowSize, windowSize, 0, 0, bufferCanvas.width, bufferCanvas.height);
+				previewContext.drawImage(video, 0, 0, previewCanvas.width, previewCanvas.height);
+
+				var canvasData = bufferContext.getImageData(0, 0, bufferCanvas.width, bufferCanvas.height);
+
+				for (var y = 0; y < bufferCanvas.height; ++y) {
+					for (var x = 0; x < bufferCanvas.width; ++x) {
+						var idx = (x + y * canvasData.width) * 4;
+						if (canvasData.data[idx] > backgroundR - backgroundTolerance && canvasData.data[idx] < backgroundR + backgroundTolerance && canvasData.data[idx + 1] > backgroundG - backgroundTolerance && canvasData.data[idx + 1] < backgroundG +
+							backgroundTolerance && canvasData.data[idx + 2] > backgroundB - backgroundTolerance && canvasData.data[idx + 2] < backgroundB + backgroundTolerance)
+							//							if (canvasData.data[idx] + canvasData.data[idx + 1] + canvasData.data[idx + 2] > 150)
+							canvasData.data[idx + 3] = 0;
+					}
+				}
+
+				bufferContext.putImageData(canvasData, 0, 0);
+				var dataURL = bufferCanvas.toDataURL();
+				front.setAttribute('src', dataURL);
+			});
+
+			camera.addEventListener("componentchanged", function(event) {
+				console.log("cameraComponentChanged");
+				// my code
+				var t1 = wrapper.getAttribute("position"),
+					t2 = camera.getAttribute("position");
+				var p1 = new THREE.Vector3(t1.x, t1.y, t1.z),
+					p2 = new THREE.Vector3(t2.x, t2.y, t2.z);
+				var normVec = (p2.clone()).sub(p1);
+				var angle;
+				if (normVec.x == 0 && normVec.y == 0) {
+					angle = 0;
+				} else {
+					var z = new THREE.Vector3(0, 0, 1);
+					var _ = Math.sign(((z.clone()).cross(normVec)).y);
+					if (!CCW) {
+						angle = Math.PI * 2 - (_ * z.angleTo(normVec) + (1 - _) * Math.PI);
+					} else {
+						angle = (_ * z.angleTo(normVec) + (1 - _) * Math.PI);
+					}
+				}
+				var timeFrame = angle / (Math.PI * 2) * video.duration;
+				if (timeFrame - lastTimeFrame > 0.01) {
+					video.currentTime = timeFrame;
+				}
+			});
+			triggerCamera();
+		}
+
+		function imgProcess(canvas, ctx) {
+			var canvasData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+			var radius = ((canvas.width < canvas.height ? canvas.width : canvas.height) - 1) / 2;
+
+			var imgData = ctx.createImageData(canvas.width, canvas.height);
+			for (var y = 0; y < canvas.height; ++y) {
+				var alpha = y / radius * (Math.PI / 2);
+				_y = radius - radius * Math.cos(alpha);
+				var _radius = Math.sqrt(radius * radius - (radius - _y) * (radius - _y));
+				for (var x = 0; x < canvas.width; ++x) {
+					var idx = (x + y * canvasData.width) * 4;
+					var theta = x / radius * (Math.PI / 2);
+					var _x = radius - (_radius == 0 ? 0 : _radius * Math.cos(theta));
+					var xLeft = Math.floor(_x);
+					var xRight = Math.ceil(_x);
+					var idx1 = (xLeft + Math.round(_y) * canvasData.width) * 4;
+					var idx2 = (xRight + Math.round(_y) * canvasData.width) * 4;
+					imgData.data[idx] = canvasData.data[idx1] * (_x - xLeft) + canvasData.data[idx2] * (1 - (_x - xLeft));
+					imgData.data[idx + 1] = canvasData.data[idx1 + 1] * (_x - xLeft) + canvasData.data[idx2 + 1] * (1 - (_x - xLeft));
+					imgData.data[idx + 2] = canvasData.data[idx1 + 2] * (_x - xLeft) + canvasData.data[idx2 + 2] * (1 - (_x - xLeft));
+					imgData.data[idx + 3] = 255;
+				}
+			}
+			return imgData;
+		}
+	</script>
+</body>

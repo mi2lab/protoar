@@ -1,0 +1,117 @@
+<html>
+
+<head>
+
+    <title>HoloClock</title>
+
+    <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1, maximum-scale=1">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta id="theme-color" name="theme-color" content="#000000">
+
+    <meta http-equiv="refresh" content="30">
+
+    <style>
+        html,
+        body {
+            height: 100%;
+        }
+        
+        body {
+            margin: 0;
+            background: black;
+            overflow: hidden;
+        }
+        
+        #container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            perspective: 800px;
+        }
+        
+        #hologram {
+            color: white;
+            text-align: center;
+            font-size: 400%;
+            display: none;
+        }
+        
+        #time {
+            font-size: 400%;
+            color: white;
+            animation: neon3 1.5s ease-in-out infinite alternate;
+        }
+        
+        @keyframes neon3 {
+            from {
+                text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #FFDD1B, 0 0 70px #FFDD1B, 0 0 80px #FFDD1B, 0 0 100px #FFDD1B, 0 0 150px #FFDD1B;
+            }
+            to {
+                text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #FFDD1B, 0 0 35px #FFDD1B, 0 0 40px #FFDD1B, 0 0 50px #FFDD1B, 0 0 75px #FFDD1B;
+            }
+        }
+    </style>
+
+    <script src="/.common/require.js"></script>
+</head>
+
+<body>
+
+    <div id="container">
+        <span id="hologram">
+            <span id="time"></span>
+        </span>
+    </div>
+
+    <script>
+        var shiftX = 0,
+            shiftY = 50;
+
+        function buildHologram() {
+            buildTime();
+
+            var mx = $("#container").width() / 2,
+                my = $("#container").height() / 2,
+                hw = $("#hologram").width(),
+                hh = $("#hologram").height();
+
+            console.log(hw);
+            console.log(hh)
+
+            // top
+            $("#hologram")
+                .css({
+                    //border: "1px solid white",
+                    //transform: "scale(-1, 1) rotate3d(1, 0, 0, -10deg)",
+                    transform: "scale(1, -1) rotate3d(1, 0, 0, -10deg)",
+                    position: "absolute",
+                    left: mx - hw / 2 + shiftX,
+                    top: my - hh / 2 + shiftY
+                })
+                .show();
+
+            setTimeout(buildHologram, 500);
+        }
+
+        function buildTime() {
+            $("#time").text(new Date().toLocaleTimeString());
+        }
+
+        function updateHologram() {
+            requestAnimationFrame(updateHologram);
+
+            buildTime();
+        }
+
+        function main() {
+            buildHologram();
+
+            updateHologram();
+        }
+
+        require(["jquery"]).then(main);
+    </script>
+
+</body>
+
+</html>

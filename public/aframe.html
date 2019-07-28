@@ -1,0 +1,76 @@
+<!-- A-frame -->
+<script src="https://aframe.io/releases/0.6.0/aframe.min.js"></script>
+<!--<script src="https://unpkg.com/aframe-motion-capture-components/dist/aframe-motion-capture-components.min.js">
+    </script>-->
+<script src="vendor/aframe-click-drag-component.min.js"></script>
+<script>
+	registerAframeClickDragComponent(window.AFRAME);
+</script>
+<script src="vendor/aframe-reverse-look-controls-component.min.js"></script>
+<script src="vendor/aframe-look-at-component.min.js"></script>
+<script src="vendor/update-raycaster.js"></script>
+
+<style>
+	.a-enter-vr {
+		display: none;
+	}
+</style>
+
+<a-scene id="ascene">
+	<a-assets id="assets">
+		<img id="hiro" src="marker.jpg">
+		<!--<video id="roesti" src="world/vid/roesti1.mp4" muted autoplay loop></video>
+        <canvas id="canvas" width="500" height="500"></canvas>-->
+	</a-assets>
+	<!--<a-plane id="roestiPlane" position="-3 3 -3" scale="0.1" src="#canvas" />-->
+	<a-plane id="marker" src="#hiro" position="0 0 0" rotation="0 0 0" material="side: double;" color="white"></a-plane>
+	<!--<a-box id="redbox" position="0 0 0" material="opacity: 0.5;" color="red" cursor-listener click-drag></a-box>-->
+	<!--a-entity id="acamera" position="0 0 5" camera="userHeight: 0; fov: 50" look-controls-enabled="true">-->
+	<a-camera id="acamera" position="0 0 5" camera="userHeight: 0; fov: 40" look-controls-enabled="true">
+		<a-entity id="cursor" cursor="fuse: false; fuseTimeout: 500" position="0 0 -1" geometry="primitive: ring; radiusInner: 0.01; radiusOuter: 0.02" material="color: blue; shader: flat" visible="false"></a-entity>
+	</a-camera>
+	<!--</a-entity>-->
+</a-scene>
+
+<!--<script>
+    var roesti = document.querySelector("#roesti");
+    var canvas = document.querySelector("#canvas");
+    var ctx = canvas.getContext("2d");
+    setInterval(function () {
+        ctx.drawImage(roesti, 0, 0, roesti.videoWidth, roesti.videoHeight, 0, 0, 500, 500);
+    }, 100);
+
+    function getRndColor() {
+        var r = 255 * Math.random() | 0,
+            g = 255 * Math.random() | 0,
+            b = 255 * Math.random() | 0;
+        return 'rgb(' + r + ',' + g + ',' + b + ')';
+    }
+</script>-->
+
+<script>
+	document.ondragover = document.oncontextmenu = function(e) {
+		if (e && e.preventDefault) {
+			e.preventDefault();
+		}
+	}
+	document.ondrop = function(e) {
+		if (e && e.preventDefault) {
+			e.preventDefault();
+		}
+		parent.view.ondrop(e);
+	}
+
+	window.draggingLock = false;
+	var acamera = document.getElementById("acamera");
+
+	document.addEventListener("dragstart", function() {
+		draggingLock = true;
+		acamera.setAttribute("look-controls-enabled", "false");
+	});
+
+	document.addEventListener("dragend", function() {
+		acamera.setAttribute("look-controls-enabled", "true");
+		draggingLock = false;
+	});
+</script>

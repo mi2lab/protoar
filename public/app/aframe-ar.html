@@ -1,0 +1,37 @@
+<!-- Augmented Reality on the Web in 10 lines of html! https://github.com/jeromeetienne/ar.js -->
+<script src="https://aframe.io/releases/0.6.0/aframe.min.js"></script>
+<script src="../vendor/aframe-ar.js"></script>
+
+<script>
+  AFRAME.registerComponent('draw-canvas', {
+    schema: {
+      default: ''
+    },
+    init: function() {
+      this.canvas = document.getElementById(this.data);
+      this.ctx = this.canvas.getContext('2d');
+      // Draw on canvas...
+    }
+  });
+</script>
+
+<style>
+  #arjsDebugUIContainer {
+    display: none;
+  }
+
+  .a-enter-vr {
+    display: none !important;
+  }
+</style>
+
+<body style="margin: 0px; overflow: hidden;">
+  <a-scene embedded arjs="sourceType: webcam;">
+    <a-assets>
+      <canvas id="my-canvas" crossorigin="anonymous"></canvas>
+    </a-assets>
+    <a-entity geometry="primitive: plane" material="src: #my-canvas" __draw-canvas="my-canvas" position="0 1.6 -3"></a-entity>
+    <a-box id="redbox" position="0 0 0" material="opacity: 0.5;" color="red"></a-box>
+    <a-marker-camera preset="hiro"></a-marker-camera>
+  </a-scene>
+</body>

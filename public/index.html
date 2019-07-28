@@ -1,17 +1,176 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Hello, World!</title>
-        <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
-    </head>
-    <body>
-        <h1>Hello, World!</h1>
-        <script>
-            const socket = io();
-            
-            socket.on("connect", function() {
-                socket.emit("hello-world", "Hello, Sockets!");
-            });
-        </script>
-    </body>
+
+<head>
+  <title>ProtoAR</title>
+
+  <link rel="icon" type="image/png" href="favicon.ico" />
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en">
+
+  <!-- A-frame -->
+  <!--<script src="https://aframe.io/releases/0.6.0/aframe.min.js"></script>-->
+
+  <!-- Font Awesome -->
+  <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+
+  <!-- FileSaver -->
+  <script src="vendor/fileSaver.min.js"></script>
+
+  <script src="vendor/three.min.js"></script>
+
+  <!-- ProtoAR -->
+  <link rel="stylesheet" href="protoar.css" />
+  <script src="/.common/https.js"></script>
+  <script src="/.common/require.js"></script>
+  <script src="protoar.js"></script>
+</head>
+
+<body>
+  <div class="toolbar">
+    <div class="toolbtn-grp">
+      <div id="brand">Proto<strong>AR</strong></div>
+      <input id="room" type="text" placeholder="room name">
+    </div>
+
+    <div class="toolbtn-grp layers">
+      <label for="layer2D">
+				<input id="layer2D" type="checkbox" checked title="Toggle 2D layer"> 2D
+			</label>
+      <label for="layer3D">
+				<input id="layer3D" type="checkbox" checked title="Toggle 3D layer"> 3D
+			</label>
+      <label for="layer360">
+				<input id="layer360" type="checkbox" checked title="Toggle 360 planes on 3D layer"> 360
+			</label>
+    </div>
+
+    <div class="toolbtn-grp color-group">
+      <input id="color" type="color" value="#000000" title="Choose color/Apply color to 2D/3D object">
+      <div class="colors">
+        <button value="#000000" class="black color-picker" title="Choose/Apply black"></button>
+        <button value="#ffffff" class="white color-picker" title="Choose/Apply white"></button>
+        <button value="#0000ff" class="blue color-picker" title="Choose/Apply blue"></button>
+        <button value="#008000" class="green color-picker" title="Choose/Apply green"></button>
+        <button value="#ff0000" class="red color-picker" title="Choose/Apply red"></button>
+        <button value="#ffff00" class="yellow color-picker" title="Choose/Apply yellow"></button>
+      </div>
+      <input id="opacity" class="slider" type="range" min="0" max="1.0" step="0.05" value="0.8" />
+    </div>
+
+    <div id="select-tools" class="toolbtn-grp">
+      <button id="enlarge" class="toolbtn"><i class="fa fa-plus-square" title="Enlarge selected 2D/3D object"></i></button>
+      <button id="shrink" class="toolbtn"><i class="fa fa-minus-square" title="Shrink selected 2D/3D object"></i></button>
+      <button id="rotate" class="toolbtn"><i class="fa fa-repeat" title="Rotate selected 2D/3D object"></i></button>
+      <button id="delete" class="toolbtn"><i class="fa fa-trash" title="Delete selected 2D/3D object"></i></button>
+    </div>
+
+    <div class="toolbtn-grp 2d-tools">
+      <button id="select-mode" class="toolbtn toggle mode"><i class="fa fa-mouse-pointer" title="Switch 2D layer to select mode"></i></button>
+      <button id="draw-mode" class="toolbtn toggle mode"><i class="fa fa-pencil" title="Switch 2D layer to select mode"></i></button>
+      <button id="line-mode" class="toolbtn toggle mode"><i class="fa fa-minus" title="Switch 2D layer to line drawing mode"></i></button>
+      <button id="rect-mode" class="toolbtn toggle mode"><i class="fa fa-square" title="Switch 2D layer to rect drawing mode"></i></button>
+      <button id="text-mode" class="toolbtn toggle mode"><i class="fa fa-i-cursor" title="Switch 2D layer to text editing mode"></i></button>
+    </div>
+
+    <div class="toolbtn-grp 3d-tools">
+      <button id="box" class="toolbtn" title="Insert box in 3D layer"><i class="fa fa-cube"></i></button>
+      <button id="plane" class="toolbtn" title="Insert plane in 3D layer"><i class="fa fa-square-o"></i></button>
+      <button id="inspect" class="toolbtn toggle" title="Show 3D layer in A-Frame Inspector">inspect</button>
+    </div>
+  </div>
+  <main>
+    <!-- Capture -->
+    <div id="capture-pane" class="pane">
+      <h2>Capture</h2>
+
+      <div id="capture-actions" class="actions">
+        <div class="toolbtn-grp">
+          <button id="capture-view" class="capture-source" title="Set capture source to view on the left">View</button>
+          <button id="capture-camera" class="capture-source" title="Set capture source to phone's raw camera">Camera</button>
+          <select id="ccamera-select" style="float: left" title="Select capture camera">
+					  <option value="select">(camera)</option>
+				  </select>
+        </div>
+
+        <div class="toolbtn-grp">
+          <button id="snapshot" class="toolbtn" title="Collect snapshot of view below"><i class="fa fa-camera"></i></button>
+          <button id="capture" class="toolbtn" title="Collect 360 capture"><i class="fa fa-street-view"></i></button>
+        </div>
+      </div>
+
+      <div>
+        <canvas id="ccanvas"></canvas>
+      </div>
+
+      <div id="capture-options">
+        <div>
+          <label for="filter" title="Toggle filter to remove colors within range">
+						<input id="filter" type="checkbox"> filter
+					</label>
+          <label for="filter-color" title="Choose filter color">color:
+            <input id="filter-color" type="color" value="#ffffff">
+          </label>
+          <label for="filter-tolerance" title="Set filter tolerance to control color range">tolerance:
+            <input id="filter-tolerance" class="slider" type="range" min="1" max="255" step="1" value="20" />
+          </label>
+        </div>
+        <div>
+          <label for="boundary" title="Toggle boundary to crop view">
+						<input id="boundary" type="checkbox">boundary</label>
+          <label for="boundary-size" title="Set boundary size">size:
+            <input id="boundary-size" class="slider" type="range" min="0" max="0.5" step="0.01" value="0.25" />
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Collect -->
+    <div id="collect-pane" class="pane">
+      <h2>Collect</h2>
+
+      <div id="collect-actions" class="actions">
+        <div class="toolbtn-grp">
+          <label for="upload" class="toolbtn" title="Upload 2D image/3D object/360 capture resource"><i class="fa fa-upload"></i>
+            <input id="upload" type="file" multiple />
+          </label>
+          <button id="download" class="toolbtn" title="Download resource(s)"><i class="fa fa-download"></i></button>
+        </div>
+        <button id="remove" class="toolbtn" title="Remove resource(s) from collection"><i class="fa fa-trash"></i></button>
+      </div>
+      <div id="resources"></div>
+    </div>
+
+    <!-- View -->
+    <div id="view-pane" class="pane">
+      <h2>View</h2>
+
+      <div class="actions">
+        <!--<select id="device"></select>-->
+
+        <div class="toolbtn-grp">
+          <button id="cursor" class="toolbtn toggle selected" title="Toggle 3D cursor"><i class="fa fa-circle-o"></i></button>
+        </div>
+
+        <div class="toolbtn-grp">
+          <button id="marker" class="toolbtn toggle selected" style="padding: 4px" title="Toggle AR marker"><img src="marker.jpg" height="15" ></button>
+          <button id="tracking" class="toolbtn toggle" title="Turn AR marker tracking on/off"><i class="fa fa-crosshairs"></i></button>
+        </div>
+
+        <div class="toolbtn-grp">
+          <button id="screenshot" class="toolbtn" title="Collect snapshot of view below"><i class="fa fa-camera"></i></button>
+          <button id="image" class="toolbtn" title="Collect snapshot of 2D layer"><i class="fa fa-image"></i></button>
+        </div>
+      </div>
+
+      <img id="stencil" src="img/phone_landscape.png" />
+
+      <div id="arview">
+        <video id="arcamera"></video>
+        <iframe id="aframe" src="aframe.html"></iframe>
+        <canvas id="fcanvas"></canvas>
+      </div>
+    </div>
+  </main>
+</body>
+
 </html>

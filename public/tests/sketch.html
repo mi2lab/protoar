@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script type="text/javascript">
+        // auto redirect to https, need this for camera
+        // Source: http://stackoverflow.com/questions/4723213/detect-http-or-https-then-force-https-in-javascript
+        if (location.protocol != "https:") {
+            location.href = "https:" + window.location.href.substring(window.location.protocol.length);
+        }
+    </script>
+
+    <title>ProtoAR Sketch</title>
+
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
+    <style type="text/css">
+        html,
+        body {
+            height: 100%;
+        }
+        
+        body {
+            background: black;
+        }
+        
+        canvas,
+        video {
+            position: absolute;
+            left: 0px;
+            top: 0px;
+        }
+        
+        canvas {
+            opacity: 0.5;
+        }
+    </style>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/fabric.js/1.7.9/fabric.min.js"></script>
+
+    <script src="/.common/camera.js"></script>
+
+    <!--<script src="oflow.js"></script>-->
+    <script src="//anvaka.github.io/oflow/dist/oflow.js"></script>
+</head>
+
+<body>
+    <div id="container">
+        <video autoplay></video>
+        <canvas id="c"></canvas>
+    </div>
+    <script type="text/javascript">
+        function _oflow() {
+            var flow = new oflow.VideoFlow(video);
+
+            flow.onCalculated(function (direction) {
+                // direction is an object which describes current flow:
+                // direction.u, direction.v {floats} general flow vector
+                // direction.zones {Array} is a collection of flowZones.
+                // Each flow zone describes optical flow direction inside of it.
+                // flowZone : {
+                //  x, y // zone center
+                //  u, v // vector of flow in the zone
+                // }
+
+                canvas.deactivateAll();
+
+                var objs = canvas.getObjects().map(function (o) {
+                    o.left += direction.u * 1;
+                    o.top += direction.v * 1;
+                    return o.set("active", true);
+                });
+
+                var group = new fabric.Group(objs, {
+                    originX: "center",
+                    originY: "center"
+                });
+                canvas.setActiveGroup(group.setCoords()).deactivateAll().renderAll();
+            });
+
+            // Starts capturing the flow from webcamera:
+            flow.startCapture();
+        }
+
+        var video = document.querySelector("video");
+
+        var camera = new Camera({
+            camera: 1,
+            video: video,
+            onstart: _oflow
+        });
+
+        video.ondblclick = camera.next;
+
+        var canvas = new fabric.Canvas("c", {
+            allowTouchScrolling: true,
+            isDrawingMode: true,
+            width: window.innerWidth,
+            height: window.innerHeight,
+        });
+
+        (function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            // reset size after rotation
+            video.style.width = "auto";
+            video.style.height = "auto";
+
+            if (window.innerWidth > window.innerHeight)
+                video.style.width = window.innerWidth + "px";
+            else
+                video.style.height = window.innerHeight + "px";
+
+            window.onresize = resize;
+        })();
+
+        // startup
+        $(function () {
+            // set up canvas using fabric.js
+            canvas.freeDrawingBrush.width = 5;
+            fabric.Object.prototype.transparentCorners = false;
+
+            // override mousedown event on touch devices to auto select mode
+            if ("ontouchstart" in window) canvas.__onMouseDown = (function (old__onMouseDown) {
+                return function (e) {
+                    // switch between select and draw mode based on moues/touch events
+                    if (e instanceof TouchEvent) _setDrawingMode(false);
+                    else _setDrawingMode(true);
+                    old__onMouseDown.call(this, e);
+                };
+            })(canvas.__onMouseDown);
+        });
+
+        function _setDrawingMode(value) {
+            // set free drawing mode
+            canvas.isDrawingMode = value;
+            // set selection according to drawing mode
+            canvas.selection = !value;
+            // unselect everything on the canvas
+            canvas.deactivateAll();
+            canvas.renderAll();
+        }
+
+        var container = document.getElementById("container");
+        container.addEventListener("drop", function (e) {
+            console.log("dropped file: ", e);
+            e = e || window.event;
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            var files = e.dataTransfer.files;
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                var reader = new FileReader();
+                console.log({
+                    left: e.clientX,
+                    top: e.clientY
+                });
+                reader.onload = function (e) {
+                    var img = new Image();
+                    img.src = e.target.result;
+                    var Img = new fabric.Image(img, {
+                        left: e.clientX,
+                        top: e.clientY
+                    });
+                    canvas.add(Img).setActiveObject(Img);
+                }
+                reader.readAsDataURL(file);
+            }
+            return false;
+        });
+
+        function _cancel(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            return false;
+        }
+
+        container.addEventListener("dragover", _cancel);
+
+        container.addEventListener("dragenter", _cancel);
+
+        var sens = 0.5,
+            dec = 2,
+            a = null,
+            ag = null;
+
+        function _devicemotion(event) {
+            if (event.accelerationIncludingGravity) {
+                ag = {
+                    x: (event.accelerationIncludingGravity.x * sens).toFixed(dec),
+                    y: (event.accelerationIncludingGravity.y * sens).toFixed(dec),
+                    z: (event.accelerationIncludingGravity.z * sens).toFixed(dec)
+                };
+            };
+
+            //console.log(ag);
+        }
+
+        window.addEventListener("devicemotion", _devicemotion, false);
+    </script>
+</body>
+
+</html>
